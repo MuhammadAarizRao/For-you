@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>if love had code.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;1,300;1,400&family=Raleway:wght@100;200;300&display=swap" rel="stylesheet">
+
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg:        #07030a;
+  --bg2:       #0e050f;
+  --ink:       #f5eef0;
+  --muted:     #7a5c6a;
+  --rose-deep: #6b0f24;
+  --rose-mid:  #9b1a35;
+  --rose-rich: #c42048;
+  --rose-blush:#e05070;
+  --rose-light:#f0809a;
+  --gold:      #f0c060;
+  --gold2:     #e0a040;
+  --stem:      #2a5c38;
+  --leaf:      #2e6640;
+  --tr-slow:   900ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+html, body {
+  width: 100%; height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Raleway', sans-serif;
+  font-weight: 200;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Deep vignette */
+body::after {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 65% 65% at 50% 48%, transparent 30%, rgba(7,3,10,0.82) 100%);
+}
+
+/* Subtle purple-red ambient glow */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 40% 40% at 50% 48%, rgba(155,26,53,0.07) 0%, transparent 70%);
+}
+
+.scene {
+  position: relative; z-index: 1;
+  width: 100%; height: 100vh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+}
+
+/* ── Header text ── */
+.label-top {
+  position: absolute;
+  top: clamp(28px, 5.5vh, 52px);
+  left: 50%; transform: translateX(-50%);
+  text-align: center;
+  opacity: 0;
+  animation: fadeDown 1.6s ease forwards 0.4s;
+  white-space: nowrap;
+}
+.label-top span {
+  display: block;
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 300;
+  font-size: clamp(0.75rem, 1.8vw, 1.05rem);
+  letter-spacing: 0.22em;
+  color: rgba(240,200,180,0.5);
+  text-transform: lowercase;
+}
+.label-top span:first-child { margin-bottom: 2px; }
+
+/* ── Flower wrapper ── */
+.flower-wrap {
+  position: relative;
+  width: clamp(260px, 44vmin, 420px);
+  height: clamp(260px, 44vmin, 420px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+}
+
+.flower-svg {
+  width: 100%; height: 100%;
+  overflow: visible;
+  transition: filter 0.6s ease;
+}
+.flower-wrap:hover .flower-svg {
+  filter: drop-shadow(0 0 38px rgba(196,32,72,0.28)) drop-shadow(0 0 80px rgba(196,32,72,0.12));
+}
+
+/* ── Stem ── */
+.stem {
+  stroke: var(--stem);
+  stroke-width: 3;
+  fill: none;
+  stroke-linecap: round;
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+  animation: drawStem 1.6s cubic-bezier(0.4,0,0.2,1) forwards 0.6s;
+}
+@keyframes drawStem {
+  to { stroke-dashoffset: 0; }
+}
+
+/* ── Leaves ── */
+.leaf {
+  opacity: 0;
+  transform-box: fill-box;
+}
+.leaf-l {
+  fill: var(--leaf);
+  animation: leafSwing 1.1s cubic-bezier(0.34,1.56,0.64,1) forwards 1.9s;
+  transform-origin: 100% 50%;
+}
+.leaf-r {
+  fill: var(--leaf);
+  animation: leafSwing 1.1s cubic-bezier(0.34,1.56,0.64,1) forwards 2.15s;
+  transform-origin: 0% 50%;
+}
+@keyframes leafSwing {
+  0%   { opacity: 0; transform: scaleX(0) rotate(-8deg); }
+  60%  { opacity: 0.9; }
+  100% { opacity: 0.82; transform: scaleX(1) rotate(0deg); }
+}
+
+/* ── Petals ── */
+.petal {
+  transform-origin: 50% 100%;
+  transform-box: fill-box;
+  opacity: 0;
+}
+
+@keyframes roseOpen {
+  0%   { opacity: 0; transform: scale(0.05) rotate(var(--twist)); }
+  40%  { opacity: 0.9; }
+  80%  { transform: scale(1.05) rotate(calc(var(--twist) * 0.05)); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+
+/* Petal rings – staggered outward */
+/* Inner (6) – first to show */
+.pi { --twist: -22deg; }
+.pi1  { animation: roseOpen 1.0s cubic-bezier(0.34,1.46,0.64,1) forwards 2.4s; }
+.pi2  { animation: roseOpen 1.0s cubic-bezier(0.34,1.46,0.64,1) forwards 2.52s; }
+.pi3  { animation: roseOpen 1.0s cubic-bezier(0.34,1.46,0.64,1) forwards 2.64s; }
+.pi4  { animation: roseOpen 1.0s cubic-bezier(0.34,1.46,0.64,1) forwards 2.76s; }
+.pi5  { animation: roseOpen 1.0s cubic-bezier(0.34,1.46,0.64,1) forwards 2.88s; }
+.pi6  { animation: roseOpen 1.0s cubic-bezier(0.34,1.46,0.64,1) forwards 3.0s; }
+
+/* Mid (8) */
+.pm { --twist: -18deg; }
+.pm1  { animation: roseOpen 1.0s cubic-bezier(0.34,1.46,0.64,1) forwards 3.05s; }
+.pm2  { animation: roseOpen 1.0s cubic-bezier(0.34,1.46,0.64,1) forwards 3.15s; }
+.pm3  { animation: roseOpen 1.0s cubic-bezier(0.34,1.46,0.64,1) forwards 3.25s; }
+.pm4  { animation: roseOpen 1.0s cubic-bezier(0.34,1.46,0.64,1) forwards 3.35s; }
+.pm5  { animation: roseOpen 1.0s cubic-bezier(0.34,1.46,0.64,1) forwards 3.45s; }
+.pm6  { animation: roseOpen 1.0s cubic-bezier(0.34,1.46,0.64,1) forwards 3.55s; }
+.pm7  { animation: roseOpen 1.0s cubic-bezier(0.34,1.46,0.64,1) forwards 3.65s; }
+.pm8  { animation: roseOpen 1.0s cubic-bezier(0.34,1.46,0.64,1) forwards 3.75s; }
+
+/* Outer (10) */
+.po { --twist: -14deg; }
+.po1  { animation: roseOpen 1.1s cubic-bezier(0.34,1.46,0.64,1) forwards 3.7s; }
+.po2  { animation: roseOpen 1.1s cubic-bezier(0.34,1.46,0.64,1) forwards 3.8s; }
+.po3  { animation: roseOpen 1.1s cubic-bezier(0.34,1.46,0.64,1) forwards 3.9s; }
+.po4  { animation: roseOpen 1.1s cubic-bezier(0.34,1.46,0.64,1) forwards 4.0s; }
+.po5  { animation: roseOpen 1.1s cubic-bezier(0.34,1.46,0.64,1) forwards 4.1s; }
+.po6  { animation: roseOpen 1.1s cubic-bezier(0.34,1.46,0.64,1) forwards 4.2s; }
+.po7  { animation: roseOpen 1.1s cubic-bezier(0.34,1.46,0.64,1) forwards 4.3s; }
+.po8  { animation: roseOpen 1.1s cubic-bezier(0.34,1.46,0.64,1) forwards 4.4s; }
+.po9  { animation: roseOpen 1.1s cubic-bezier(0.34,1.46,0.64,1) forwards 4.5s; }
+.po10 { animation: roseOpen 1.1s cubic-bezier(0.34,1.46,0.64,1) forwards 4.6s; }
+
+/* Center bud */
+.center-disc {
+  opacity: 0;
+  transform-origin: center center;
+  transform-box: fill-box;
+  animation: centerPop 0.9s cubic-bezier(0.34,1.56,0.64,1) forwards 4.9s;
+}
+@keyframes centerPop {
+  0%  { opacity: 0; transform: scale(0); }
+  70% { transform: scale(1.1); }
+  100%{ opacity: 1; transform: scale(1); }
+}
+
+/* Gentle perpetual breathe after blooming */
+@keyframes breathe {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.012); }
+}
+.flower-svg.bloomed #roseGroup {
+  animation: breathe 4s ease-in-out infinite;
+  transform-origin: center;
+}
+
+/* Hover glow on petals */
+.flower-wrap:hover .petal {
+  filter: brightness(1.08);
+}
+
+/* ── Reblooming ── */
+.flower-svg.reblooming .petal,
+.flower-svg.reblooming .center-disc {
+  animation: none !important;
+  opacity: 0;
+  transform: scale(0.05);
+}
+
+/* Ripple */
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(196,32,72,0.35);
+  width: 12px; height: 12px;
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%) scale(0);
+  pointer-events: none;
+  animation: rippleOut 1.4s ease forwards;
+}
+@keyframes rippleOut {
+  to { transform: translate(-50%,-50%) scale(32); opacity: 0; }
+}
+
+/* ── Canvas ── */
+.heart-canvas {
+  position: absolute; inset: 0;
+  pointer-events: none;
+}
+
+/* ── Bottom text ── */
+.label-bottom {
+  position: absolute;
+  bottom: clamp(28px, 5.5vh, 52px);
+  left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+}
+.hint {
+  font-size: clamp(0.55rem, 1.1vw, 0.68rem);
+  letter-spacing: 0.38em;
+  text-transform: uppercase;
+  color: var(--muted);
+  opacity: 0;
+  animation: fadeUpSimple 1.6s ease forwards 5.2s;
+  white-space: nowrap;
+  text-align: center;
+  width: 100%;
+}
+.bloom-count {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-size: clamp(0.6rem, 1.2vw, 0.78rem);
+  color: var(--rose-blush);
+  letter-spacing: 0.12em;
+  opacity: 0;
+  transition: opacity 0.7s ease;
+}
+.bloom-count.visible { opacity: 0.8; }
+
+/* ── Decorative corners ── */
+.corner {
+  position: absolute;
+  width: 36px; height: 36px;
+  opacity: 0;
+  animation: fadeIn 1.4s ease forwards 1.0s;
+}
+.corner-tl { top: clamp(18px,3vw,34px); left: clamp(18px,3vw,34px);
+  border-top: 1px solid rgba(196,32,72,0.22); border-left: 1px solid rgba(196,32,72,0.22); }
+.corner-tr { top: clamp(18px,3vw,34px); right: clamp(18px,3vw,34px);
+  border-top: 1px solid rgba(196,32,72,0.22); border-right: 1px solid rgba(196,32,72,0.22); }
+.corner-bl { bottom: clamp(18px,3vw,34px); left: clamp(18px,3vw,34px);
+  border-bottom: 1px solid rgba(196,32,72,0.22); border-left: 1px solid rgba(196,32,72,0.22); }
+.corner-br { bottom: clamp(18px,3vw,34px); right: clamp(18px,3vw,34px);
+  border-bottom: 1px solid rgba(196,32,72,0.22); border-right: 1px solid rgba(196,32,72,0.22); }
+
+/* ── Keyframes ── */
+@keyframes fadeUpSimple {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+@keyframes fadeDown {
+  from { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+@keyframes fadeIn {
+  to { opacity: 1; }
+}
+
+@media (max-width: 480px) {
+  .corner { width: 22px; height: 22px; }
+}
+
+/* ── Bloom Message Overlay ── */
+.bloom-msg-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(7, 3, 10, 0.0);
+  pointer-events: none;
+  transition: background 0.8s ease;
+}
+.bloom-msg-overlay.active {
+  pointer-events: all;
+  background: rgba(7, 3, 10, 0.78);
+}
+
+.bloom-msg-card {
+  position: relative;
+  max-width: clamp(280px, 85vw, 520px);
+  padding: clamp(28px, 5vw, 52px) clamp(28px, 6vw, 56px);
+  text-align: center;
+  border: 1px solid rgba(196, 32, 72, 0.22);
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 40%, rgba(107,15,36,0.18) 0%, transparent 70%),
+    rgba(14, 5, 15, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  opacity: 0;
+  transform: translateY(24px) scale(0.96);
+  transition: opacity 0.7s cubic-bezier(0.23,1,0.32,1), transform 0.7s cubic-bezier(0.23,1,0.32,1);
+  box-shadow:
+    0 0 60px rgba(196,32,72,0.12),
+    inset 0 0 40px rgba(107,15,36,0.08);
+}
+.bloom-msg-overlay.active .bloom-msg-card {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* Corner ornaments on card */
+.bloom-msg-card::before,
+.bloom-msg-card::after {
+  content: '';
+  position: absolute;
+  width: 28px; height: 28px;
+  border-color: rgba(196,32,72,0.35);
+  border-style: solid;
+}
+.bloom-msg-card::before {
+  top: 12px; left: 12px;
+  border-width: 1px 0 0 1px;
+}
+.bloom-msg-card::after {
+  bottom: 12px; right: 12px;
+  border-width: 0 1px 1px 0;
+}
+
+.bloom-msg-bismillah {
+  display: block;
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-size: clamp(0.62rem, 1.3vw, 0.78rem);
+  letter-spacing: 0.28em;
+  color: var(--gold2);
+  opacity: 0.7;
+  margin-bottom: clamp(16px, 3vw, 24px);
+  text-transform: uppercase;
+}
+
+.bloom-msg-text {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(0.9rem, 2.2vw, 1.12rem);
+  line-height: 1.85;
+  color: rgba(245, 238, 240, 0.92);
+  letter-spacing: 0.03em;
+  margin-bottom: clamp(20px, 3.5vw, 30px);
+}
+
+.bloom-msg-sig {
+  display: block;
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-size: clamp(0.85rem, 1.8vw, 1.05rem);
+  letter-spacing: 0.18em;
+  color: var(--rose-light);
+  opacity: 1;
+  margin-top: clamp(14px, 2.5vw, 20px);
+}
+
+.bloom-msg-close {
+  margin-top: clamp(22px, 4vw, 32px);
+  background: none;
+  border: 1px solid rgba(196,32,72,0.3);
+  color: rgba(240,200,180,0.55);
+  font-family: 'Raleway', sans-serif;
+  font-weight: 200;
+  font-size: clamp(0.52rem, 1vw, 0.64rem);
+  letter-spacing: 0.36em;
+  text-transform: uppercase;
+  padding: 9px 22px;
+  cursor: pointer;
+  transition: border-color 0.4s, color 0.4s, background 0.4s;
+}
+.bloom-msg-close:hover {
+  border-color: rgba(196,32,72,0.65);
+  color: rgba(240,200,180,0.9);
+  background: rgba(196,32,72,0.08);
+}
+
+/* Tiny rose divider */
+.bloom-msg-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 0 0 clamp(16px, 3vw, 22px);
+  opacity: 0.45;
+}
+.bloom-msg-divider::before,
+.bloom-msg-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(196,32,72,0.6));
+}
+.bloom-msg-divider::after {
+  background: linear-gradient(to left, transparent, rgba(196,32,72,0.6));
+}
+.bloom-msg-divider span {
+  color: var(--rose-mid);
+  font-size: 0.75rem;
+}
+</style>
+</head>
+<body>
+
+<div class="scene">
+  <div class="corner corner-tl"></div>
+  <div class="corner corner-tr"></div>
+  <div class="corner corner-bl"></div>
+  <div class="corner corner-br"></div>
+
+  <div class="label-top">
+    <span>if love had code</span>
+    <span>this would be it</span>
+  </div>
+
+  <div class="flower-wrap" id="flowerWrap" role="button" tabindex="0" aria-label="Bloom the rose">
+    <canvas class="heart-canvas" id="heartCanvas"></canvas>
+
+    <svg class="flower-svg" id="flowerSvg" viewBox="-110 -150 220 260"
+         xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs>
+        <!-- Rose petal gradients -->
+        <radialGradient id="pgIn" cx="50%" cy="90%" r="80%">
+          <stop offset="0%"   stop-color="#c42048"/>
+          <stop offset="60%"  stop-color="#9b1a35"/>
+          <stop offset="100%" stop-color="#6b0f24"/>
+        </radialGradient>
+        <radialGradient id="pgMid" cx="50%" cy="85%" r="75%">
+          <stop offset="0%"   stop-color="#d43058"/>
+          <stop offset="55%"  stop-color="#a82040"/>
+          <stop offset="100%" stop-color="#75102a"/>
+        </radialGradient>
+        <radialGradient id="pgOut" cx="50%" cy="80%" r="70%">
+          <stop offset="0%"   stop-color="#de4068"/>
+          <stop offset="50%"  stop-color="#b82848"/>
+          <stop offset="100%" stop-color="#821530"/>
+        </radialGradient>
+        <!-- Petal vein overlay -->
+        <linearGradient id="veinGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="rgba(255,255,255,0)" />
+          <stop offset="50%" stop-color="rgba(255,255,255,0.07)" />
+          <stop offset="100%" stop-color="rgba(255,255,255,0)" />
+        </linearGradient>
+        <!-- Center bud gradient -->
+        <radialGradient id="cgBud" cx="45%" cy="40%" r="60%">
+          <stop offset="0%"   stop-color="#f0c060"/>
+          <stop offset="45%"  stop-color="#c8853a"/>
+          <stop offset="100%" stop-color="#8b4520"/>
+        </radialGradient>
+        <radialGradient id="cgBud2" cx="50%" cy="50%" r="50%">
+          <stop offset="0%"   stop-color="rgba(240,200,100,0.6)"/>
+          <stop offset="100%" stop-color="rgba(140,60,20,0)" />
+        </radialGradient>
+        <!-- Leaf gradient -->
+        <linearGradient id="lgLeaf" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#1e4a28"/>
+          <stop offset="100%" stop-color="#3a7048"/>
+        </linearGradient>
+        <!-- Drop shadow filter -->
+        <filter id="petalShadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="rgba(0,0,0,0.35)"/>
+        </filter>
+      </defs>
+
+      <g id="roseGroup">
+        <!-- Stem -->
+        <path class="stem"
+          d="M0,28 C-6,50 10,75 2,95 C-2,110 4,125 0,142"/>
+
+        <!-- Leaves -->
+        <path class="leaf leaf-l"
+          d="M0,90 C-12,78 -38,72 -32,88 C-26,100 -8,96 0,90 Z"/>
+        <path class="leaf leaf-r"
+          d="M2,105 C16,92 42,86 36,103 C30,116 10,112 2,105 Z"/>
+
+        <!-- Outer petals (10) – widest, most open -->
+        <g id="outerPetals" filter="url(#petalShadow)"></g>
+        <!-- Mid petals (8) -->
+        <g id="midPetals" filter="url(#petalShadow)"></g>
+        <!-- Inner petals (6) – tightest around bud -->
+        <g id="innerPetals"></g>
+
+        <!-- Center -->
+        <g class="center-disc">
+          <circle cx="0" cy="0" r="14" fill="url(#cgBud)"/>
+          <circle cx="0" cy="0" r="14" fill="url(#cgBud2)" opacity="0.7"/>
+          <circle cx="-4" cy="-4" r="1.2" fill="rgba(80,30,5,0.5)"/>
+          <circle cx="4"  cy="-5" r="1.0" fill="rgba(80,30,5,0.45)"/>
+          <circle cx="0"  cy="5"  r="1.1" fill="rgba(80,30,5,0.45)"/>
+          <circle cx="-6" cy="3"  r="0.9" fill="rgba(80,30,5,0.38)"/>
+          <circle cx="6"  cy="3"  r="0.9" fill="rgba(80,30,5,0.38)"/>
+          <circle cx="-2" cy="-8" r="0.8" fill="rgba(80,30,5,0.3)"/>
+          <circle cx="2"  cy="-8" r="0.8" fill="rgba(80,30,5,0.3)"/>
+          <circle cx="7"  cy="-2" r="0.8" fill="rgba(80,30,5,0.32)"/>
+          <circle cx="-7" cy="-2" r="0.8" fill="rgba(80,30,5,0.32)"/>
+          <circle cx="0"  cy="0"  r="3"   fill="rgba(60,20,4,0.55)"/>
+        </g>
+      </g>
+    </svg>
+  </div>
+
+  <div class="label-bottom">
+    <div class="hint" id="hintText">touch to bloom again</div>
+    <div class="bloom-count" id="bloomCount"></div>
+  </div>
+</div>
+
+<script>
+// ── Build rose petal paths ────────────────────────────────────────────────────
+(function buildPetals() {
+  const outer = document.getElementById('outerPetals');
+  const mid   = document.getElementById('midPetals');
+  const inner = document.getElementById('innerPetals');
+
+  // Rose petal: wider, cupped, with rolled edge
+  function rosePetal(len, wid, cup) {
+    const hw = wid * 0.5;
+    const coff = len * cup; // how far from base to cup peak
+    return `M 0 0
+      C ${-hw*1.1} ${-len*0.18}, ${-hw*1.25} ${-len*0.55}, ${-hw*0.6} ${-len*0.82}
+      C ${-hw*0.25} ${-len*0.95}, ${hw*0.25} ${-len*0.95}, ${hw*0.6} ${-len*0.82}
+      C ${hw*1.25} ${-len*0.55}, ${hw*1.1} ${-len*0.18}, 0 0 Z`;
+  }
+
+  function makeRing(container, count, petalLen, petalWid, gradId, ringClass, classPrefix) {
+    for (let i = 0; i < count; i++) {
+      const angle = (i / count) * 360 + (ringClass === 'pi' ? 15 : ringClass === 'pm' ? 7.5 : 0);
+      const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      g.setAttribute('transform', `rotate(${angle})`);
+
+      const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      p.setAttribute('d', rosePetal(petalLen, petalWid));
+      p.setAttribute('fill', `url(#${gradId})`);
+      p.setAttribute('class', `petal ${ringClass} ${classPrefix}${i+1}`);
+
+      // Vein highlight
+      const v = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      v.setAttribute('d', rosePetal(petalLen, petalWid));
+      v.setAttribute('fill', 'url(#veinGrad)');
+      v.setAttribute('class', `petal ${ringClass} ${classPrefix}${i+1}`);
+      v.style.setProperty('--twist', '0deg');
+
+      g.appendChild(p);
+      g.appendChild(v);
+      container.appendChild(g);
+    }
+  }
+
+  makeRing(outer, 10, 60, 36, 'pgOut', 'po', 'po');
+  makeRing(mid,    8, 44, 27, 'pgMid', 'pm', 'pm');
+  makeRing(inner,  6, 28, 18, 'pgIn',  'pi', 'pi');
+})();
+
+// ── Heart particle system ─────────────────────────────────────────────────────
+const canvas = document.getElementById('heartCanvas');
+const ctx    = canvas.getContext('2d');
+let   parts  = [];
+
+function resizeCanvas() {
+  const w = document.getElementById('flowerWrap');
+  canvas.width  = w.offsetWidth;
+  canvas.height = w.offsetHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+function heartPath(ctx, x, y, size) {
+  ctx.beginPath();
+  const s = size;
+  ctx.moveTo(x, y + s * 0.35);
+  ctx.bezierCurveTo(x, y, x - s, y, x - s, y + s * 0.35);
+  ctx.bezierCurveTo(x - s, y + s * 0.65, x, y + s * 0.9, x, y + s * 1.1);
+  ctx.bezierCurveTo(x, y + s * 0.9, x + s, y + s * 0.65, x + s, y + s * 0.35);
+  ctx.bezierCurveTo(x + s, y, x, y, x, y + s * 0.35);
+}
+
+function spawnBurst() {
+  const cx = canvas.width / 2, cy = canvas.height / 2;
+  for (let i = 0; i < 22; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = Math.random() * 2.2 + 0.8;
+    const hue   = 340 + Math.random() * 30;
+    parts.push({
+      x: cx + (Math.random()-0.5)*20,
+      y: cy + (Math.random()-0.5)*20,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 1.4,
+      size: Math.random() * 5 + 2.5,
+      alpha: 1,
+      decay: Math.random() * 0.018 + 0.01,
+      rot: Math.random() * Math.PI,
+      hue
+    });
+  }
+}
+
+// Ambient floaters
+setInterval(() => {
+  const cx = canvas.width / 2, cy = canvas.height / 2;
+  const spread = canvas.width * 0.2;
+  parts.push({
+    x: cx + (Math.random()-0.5)*spread,
+    y: cy + (Math.random()-0.5)*spread*0.6 + 10,
+    vx: (Math.random()-0.5) * 0.35,
+    vy: -(Math.random() * 0.55 + 0.3),
+    size: Math.random() * 3.5 + 1.5,
+    alpha: Math.random() * 0.45 + 0.18,
+    decay: 0.005,
+    rot: Math.random() * Math.PI,
+    hue: 340 + Math.random() * 30
+  });
+}, 260);
+
+function animParts() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const p = parts[i];
+    p.x  += p.vx;
+    p.y  += p.vy;
+    p.vy -= 0.01;
+    p.vx *= 0.993;
+    p.rot += 0.03;
+    p.alpha -= p.decay;
+    if (p.alpha <= 0) { parts.splice(i, 1); continue; }
+
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rot);
+    ctx.scale(p.size * 0.1, p.size * 0.1);
+    heartPath(ctx, 0, -p.size * 0.55, p.size * 0.9);
+    ctx.fillStyle = `hsla(${p.hue}, 80%, 68%, ${p.alpha})`;
+    ctx.fill();
+    ctx.restore();
+  }
+  requestAnimationFrame(animParts);
+}
+animParts();
+
+// ── Bloom interaction ─────────────────────────────────────────────────────────
+const wrap    = document.getElementById('flowerWrap');
+const svg     = document.getElementById('flowerSvg');
+const hint    = document.getElementById('hintText');
+const countEl = document.getElementById('bloomCount');
+let blooms    = 0;
+let canBloom  = false;
+
+setTimeout(() => {
+  canBloom = true;
+  svg.classList.add('bloomed');
+  // Show message after the very first auto-bloom finishes
+  setTimeout(() => {
+    const overlay = document.getElementById('bloomMsgOverlay');
+    if (overlay) overlay.classList.add('active');
+  }, 700);
+}, 5100);
+
+function triggerBloom() {
+  if (!canBloom) return;
+  blooms++;
+  canBloom = false;
+  svg.classList.remove('bloomed');
+
+  spawnBurst();
+
+  const rip = document.createElement('div');
+  rip.className = 'ripple';
+  wrap.appendChild(rip);
+  setTimeout(() => rip.remove(), 1500);
+
+  // Reset
+  svg.classList.add('reblooming');
+  void svg.offsetWidth;
+
+  const petals = svg.querySelectorAll('.petal, .center-disc');
+  petals.forEach(el => {
+    el.style.animation = 'none';
+    void el.offsetWidth;
+    el.style.animation = '';
+  });
+
+  requestAnimationFrame(() => {
+    svg.classList.remove('reblooming');
+
+    const innerPs = svg.querySelectorAll('.pi');
+    const midPs   = svg.querySelectorAll('.pm');
+    const outerPs = svg.querySelectorAll('.po');
+    const center  = svg.querySelector('.center-disc');
+
+    // Each ring element is actually a <g> wrapping two <path>s
+    // The animation classes are on the paths themselves
+    const allInner = svg.querySelectorAll('.petal.pi');
+    const allMid   = svg.querySelectorAll('.petal.pm');
+    const allOuter = svg.querySelectorAll('.petal.po');
+
+    function setAnim(el, val) {
+      el.style.opacity = '0';
+      el.style.transform = 'scale(0.05)';
+      void el.offsetWidth;
+      el.style.animation = val;
+      el.style.opacity = '';
+      el.style.transform = '';
+    }
+
+    allInner.forEach((p, i) => setAnim(p, `roseOpen 1.0s cubic-bezier(0.34,1.46,0.64,1) forwards ${i*0.1}s`));
+    allMid.forEach((p, i)   => setAnim(p, `roseOpen 1.0s cubic-bezier(0.34,1.46,0.64,1) forwards ${0.6 + i*0.08}s`));
+    allOuter.forEach((p, i) => setAnim(p, `roseOpen 1.1s cubic-bezier(0.34,1.46,0.64,1) forwards ${1.3 + i*0.08}s`));
+    setAnim(center, 'centerPop 0.9s cubic-bezier(0.34,1.56,0.64,1) forwards 2.2s');
+
+    setTimeout(() => { canBloom = true; svg.classList.add('bloomed'); }, 3200);
+
+    // Show message after petals finish opening
+    setTimeout(() => {
+      const overlay = document.getElementById('bloomMsgOverlay');
+      if (overlay) overlay.classList.add('active');
+    }, 2600);
+  });
+
+  const msgs = ['bloomed once', `bloomed ${blooms} times`];
+  countEl.textContent = blooms === 1 ? 'bloomed once, like a feeling' : `bloomed ${blooms} times — love loops`;
+  countEl.classList.add('visible');
+}
+
+wrap.addEventListener('click', triggerBloom);
+wrap.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') triggerBloom(); });
+
+// ── Gentle sway on mouse move ─────────────────────────────────────────────────
+document.addEventListener('mousemove', e => {
+  const cx = window.innerWidth  / 2;
+  const cy = window.innerHeight / 2;
+  const dx = (e.clientX - cx) / cx;
+  const dy = (e.clientY - cy) / cy;
+  svg.style.transform = `rotate(${dx * 2.2}deg) translateY(${dy * 3.5}px)`;
+  svg.style.transition = 'transform 1.4s cubic-bezier(0.23,1,0.32,1)';
+});
+</script>
+
+<!-- Bloom Message Overlay -->
+<div class="bloom-msg-overlay" id="bloomMsgOverlay">
+  <div class="bloom-msg-card" id="bloomMsgCard">
+    <span class="bloom-msg-bismillah">✦ &nbsp; with love &nbsp; ✦</span>
+    <div class="bloom-msg-divider"><span>❀</span></div>
+    <p class="bloom-msg-text">
+      May Allah protect you from the evil eye and from those who secretly dislike your success.<br><br>
+      Seeing you thrive is my dream come true.<br><br>
+      Wishing you a lifetime of happiness,
+    </p>
+    <span class="bloom-msg-sig">— ATIYA</span>
+    <br>
+    <button class="bloom-msg-close" id="bloomMsgClose">close &nbsp; ✕</button>
+  </div>
+</div>
+
+<script>
+  // Close button wiring — runs after overlay HTML exists in DOM
+  const _overlay = document.getElementById('bloomMsgOverlay');
+  document.getElementById('bloomMsgClose').addEventListener('click', () => {
+    _overlay.classList.remove('active');
+  });
+  _overlay.addEventListener('click', e => {
+    if (e.target === _overlay) _overlay.classList.remove('active');
+  });
+</script>
+
+</body>
+</html>
